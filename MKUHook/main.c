@@ -15,6 +15,7 @@
 #include "code/mkuplrinfo.h"
 #include "code/eSettingsMgr.h"
 #include "code/stage.h"
+#include "code/debug_hooks.h"
 
 #include "code/mips.h"
 
@@ -120,16 +121,15 @@ int Init(u32 addr)
 	LOG_Message("Init: before patch_stage_data\n");
 	patch_stage_data();
 	LOG_Message("Init: patch_stage_data returned; installing remaining hooks\n");
-	log_make_call("stage_lock/24BEC", 0x24BEC, (uintptr_t)hook_stage_lock_status);
-	log_make_call("stage_lock/BD318", 0xBD318, (uintptr_t)hook_stage_lock_status);
-	log_make_call("stage_lock/160E4C", 0x160E4C, (uintptr_t)hook_stage_lock_status);
-	log_make_call("play_kon_music/7F7FC", 0x7F7FC, (uintptr_t)play_kon_music);
+	log_make_call("stage_lock/24BEC", 0x24BEC, (uintptr_t)debug_hook_stage_lock_status);
+	log_make_call("stage_lock/BD318", 0xBD318, (uintptr_t)debug_hook_stage_lock_status);
+	log_make_call("stage_lock/160E4C", 0x160E4C, (uintptr_t)debug_hook_stage_lock_status);
+	log_make_call("play_kon_music/7F7FC", 0x7F7FC, (uintptr_t)debug_play_kon_music);
 
 	LOG_Message("Init: all patches installed; returning to module loader\n");
 	return 0;
 }
 
-// تم تصحيح SceModule2 إلى SceModule هنا:
 int OnModuleStart(SceModule* mod) {
 	LOG_Messagef("OnModuleStart: module=%s text=%08X\n", mod->modname, mod->text_addr);
 	char* modname = mod->modname;

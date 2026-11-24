@@ -1,5 +1,5 @@
 TARGET = mkuhook
-OBJS = main.o exports.o minIni.o code/pspmem.o code/mkdeception.o code/game_functions.o code/eLog.o code/mkuhook.o code/eSettingsMgr.o code/mkuplrinfo.o code/stage.o code/mips.o code/injector.o
+OBJS = main.o exports.o minIni.o code/pspmem.o code/mkdeception.o code/game_functions.o code/eLog.o code/mkuhook.o code/eSettingsMgr.o code/mkuplrinfo.o code/stage.o code/mips.o code/injector.o code/debug_hooks.o
 
 # Debug build: retain source-level symbols and disable optimization.
 CFLAGS = -g -O0 -G0 -Wall -fshort-wchar -fno-pic -mno-check-zero-division
