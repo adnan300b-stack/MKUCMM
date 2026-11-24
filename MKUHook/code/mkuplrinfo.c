@@ -275,18 +275,18 @@ void custom_load_ssf(struct mem_ssf_header * ptr)
 		load_ssf((struct mem_ssf_header*)pCharTable[p1_id].file_table);
 }
 
-void custom_load_ssf_async(struct mem_ssf_header * ptr)
+دvoid custom_load_ssf_async(struct mem_ssf_header * ptr)
 {
 	int async_proc_data = ReadInt(0x58F6B4);
-	int scriptID = *(int*)(async_proc_data + 8);
 	int charID = *(int*)(async_proc_data + 12);
 	int flags = *(int*)(async_proc_data + 16);
 
 	if (flags & 1)
-		load_ssf(pCharTable[charID].alt_file_table);
+		load_ssf((struct mem_ssf_header*)pCharTable[charID].alt_file_table);
 	else
-		load_ssf(pCharTable[charID].file_table);
+		load_ssf((struct mem_ssf_header*)pCharTable[charID].file_table);
 }
+
 
 void custom_load_ssf_alt(struct mem_ssf_header* ptr)
 {
