@@ -15,8 +15,9 @@ int AllocMemBlock(int size, int* id) {
     if (*id < 0) {
         return 0;
     }
-    return sceKernelGetBlockHeadAddr(*id);
+    return (int)sceKernelGetBlockHeadAddr(*id);
 }
+
 
 void FreeMemBlock(int id)
 {
