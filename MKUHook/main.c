@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <systemctrl.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "code/config.h"
 #include "code/pspmem.h"
@@ -20,6 +21,15 @@ PSP_MODULE_INFO(MODULE_NAME, 0, 1, 0);
 static STMOD_HANDLER previous;
 SceUID thid;
 u32 mod_text_addr;
+
+/* newlib's abort() needs a target-specific process exit implementation. */
+void _exit(int status)
+{
+	sceKernelExitDeleteThread(status);
+	for (;;) {
+		/* sceKernelExitDeleteThread should not return. */
+	}
+}
 
 int GenericTrueReturn() { return 1; }
 int GenericFalseReturn() { return 0; }
@@ -39,7 +49,7 @@ int Init(u32 addr)
 	
 	if (SettingsMgr_Get().bHideFighterFaceInLifebar)
 		PatchChar(0x2CECE0, 0x00);
-	
+
 	MakeCall(0xA0DB4, (int)hook_load_hero_model);
 	MakeCall(0x1C0710, (int)hook_load_hero_model);
 
@@ -118,7 +128,7 @@ int OnModuleStart(SceModule* mod) {
 			return -1;
 
 		sceKernelDcacheWritebackAll();
-		sceKernelIcacheClearAll();
+		sceKernelIcacheInvalidateAll();
 	}
 	if (!previous)
 		return 0;
@@ -148,7 +158,7 @@ int module_start(SceSize argc, void* argp) {
 						return 0; // تم تصحيح return; إلى return 0;
 
 					sceKernelDcacheWritebackAll();
-					sceKernelIcacheClearAll();
+					sceKernelIcacheInvalidateAll();
 					return 0; // تم تصحيح return; إلى return 0;
 				}
 			}
