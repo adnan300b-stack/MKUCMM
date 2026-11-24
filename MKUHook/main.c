@@ -4,8 +4,6 @@
 #include <systemctrl.h>
 #include <string.h>
 
-
-
 #include "code/config.h"
 #include "code/pspmem.h"
 #include "code/mkdeception.h"
@@ -27,19 +25,14 @@ int GenericTrueReturn() { return 1; }
 int GenericFalseReturn() { return 0; }
 void  GenericDummy() { }
 
-
-
 int Init(u32 addr)
 {
 	LOG_Initialise();
 	PSPPatcher_Init(addr);
 	MKDeception_Init(addr);
 	SettingsMgr_Init();
-	//dump_char_table(addr);
-	//dump_stage_table(addr);
 	dump_select_stable(addr);
 	calculate_custom_toc();
-	
 	
 	if (SettingsMgr_Get().bUsePuzzleModifierInNormalGame)
 		Nop(0x153DD4);
@@ -49,13 +42,7 @@ int Init(u32 addr)
 	
 	MakeCall(0xA0DB4, (int)hook_load_hero_model);
 	MakeCall(0x1C0710, (int)hook_load_hero_model);
-	
-	//
-	//
 
-
-	//MakeCall(0x15FEA0, (int)hook_restore_select_screen);
-	// this allows npcs to be selectable
 	MakeCall(0x6F7F4, (int)hook_character_lock_status);
 	MakeCall(0xBD370, (int)hook_character_lock_status);
 	MakeCall(0xBEADC, (int)hook_character_lock_status);
@@ -72,9 +59,7 @@ int Init(u32 addr)
 	MakeCall(0x16072C, (int)hook_character_lock_status);
 	MakeCall(0x1627F0, (int)hook_character_lock_status);
 	MakeCall(0x163938, (int)hook_character_lock_status);
-	
 
-	
 	MakeCall(0x13FF04, (int)get_char_name);
 	MakeCall(0x13FF14, (int)get_char_name);
 	MakeCall(0x13FC38, (int)movelist_get_char_name);
@@ -91,7 +76,6 @@ int Init(u32 addr)
 	MakeCall(0x6F3E8, (int)unk_load_ssf);
 	MakeCall(0x6F3F4, (int)unk_load_script_data);
 	
-	
 	MakeCall(0x153B00, (int)custom_load_ssf_alt);
 	MakeCall(0x153B1C, (int)custom_load_ssf);
 	MakeCall(0x1506A8, (int)custom_load_ssf_async);
@@ -102,8 +86,6 @@ int Init(u32 addr)
 	MakeCall(0x14EFAC, (int)custom_create_player);
 	MakeCall(0x14EFC0, (int)custom_create_player);
 
-
-	
 	MakeCall(0x150424, (int)custom_load_script_data);
 	MakeCall(0x1506B4, (int)custom_load_script_data_async);
 	
@@ -111,28 +93,21 @@ int Init(u32 addr)
 	MakeCall(0x16836C, (int)player2_name);
 	MakeCall(0x82B04,  (int)set_win_name);
 
-
 	MakeCall(0xC0CFC, (int)hook_render);
 	MakeCall(0xC0D2C, (int)hook_render);
-
 
 	patch_stage_data();
 	MakeCall(0x24BEC, (int)hook_stage_lock_status);
 	MakeCall(0xBD318, (int)hook_stage_lock_status);
 	MakeCall(0x160E4C, (int)hook_stage_lock_status);
-	
-
 
 	MakeCall(0x7F7FC, (int)play_kon_music);
 
-
 	return 0;
-
 }
 
-
-
-int OnModuleStart(SceModule2* mod) {
+// تم تصحيح SceModule2 إلى SceModule هنا:
+int OnModuleStart(SceModule* mod) {
 	char* modname = mod->modname;
 
 	if (strcmp(modname, TARGET_GAME) == 0) {
@@ -150,7 +125,6 @@ int OnModuleStart(SceModule2* mod) {
 
 	return previous(mod);
 }
-
 
 int module_start(SceSize argc, void* argp) {
 
@@ -171,11 +145,11 @@ int module_start(SceSize argc, void* argp) {
 
 					int ret = Init(mod_text_addr);
 					if (ret != 0)
-						return;
+						return 0; // تم تصحيح return; إلى return 0;
 
 					sceKernelDcacheWritebackAll();
 					sceKernelIcacheClearAll();
-					return;
+					return 0; // تم تصحيح return; إلى return 0;
 				}
 			}
 		}
@@ -183,7 +157,6 @@ int module_start(SceSize argc, void* argp) {
 	else {
 		previous = sctrlHENSetStartModuleHandler(OnModuleStart); // PSP
 	}
-
 
 	return 0;
 }
