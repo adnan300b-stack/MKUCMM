@@ -3,19 +3,35 @@
 #include "mkuhook.h"
 #include "mkdeception.h"
 #include "stage.h"
+#include "injector.h"
 #include <stdint.h>
 
 #define DEBUG_HOOK_LOG_LIMIT 8
+
+static int is_plausible_code_pointer(uintptr_t pointer)
+{
+	/* PSP user/module addresses are 32-bit and instruction-aligned. This is a
+	 * conservative log-only check; it does not dereference the pointer. */
+	return pointer != 0 && pointer <= UINT32_MAX && (pointer & 3U) == 0;
+}
+
+static unsigned int log_code_pointer(uintptr_t pointer)
+{
+	return is_plausible_code_pointer(pointer) ? (unsigned int)pointer : 0U;
+}
 
 int debug_hook_stage_lock_status(int id)
 {
 	static unsigned int calls;
 	unsigned int call_number = ++calls;
 	int result;
+	uintptr_t delegate = (uintptr_t)is_bgnd_locked;
+	int mode = (int)injector.ReadMemory32(0x58EE98);
 
 	if (call_number <= DEBUG_HOOK_LOG_LIMIT)
-		LOG_Messagef("HOOK stage_lock #%u enter id=%d mode=%d delegate=%08X\n",
-			call_number, id, ReadInt(0x58EE98), (unsigned int)(uintptr_t)is_bgnd_locked);
+		LOG_Messagef("HOOK stage_lock #%u enter id=%d mode=%d delegate=%08X valid=%d\n",
+			call_number, id, mode, log_code_pointer(delegate),
+			is_plausible_code_pointer(delegate));
 
 	result = hook_stage_lock_status(id);
 
@@ -28,11 +44,14 @@ void debug_play_kon_music(void)
 {
 	static unsigned int calls;
 	unsigned int call_number = ++calls;
+	uintptr_t randu_pointer = (uintptr_t)randu;
+	uintptr_t set_music_pointer = (uintptr_t)set_music;
 
 	if (call_number <= DEBUG_HOOK_LOG_LIMIT)
-		LOG_Messagef("HOOK play_kon_music #%u enter game-base=%08X randu=%08X set_music=%08X\n",
-			call_number, (unsigned int)GetBaseAddr(),
-			(unsigned int)(uintptr_t)randu, (unsigned int)(uintptr_t)set_music);
+		LOG_Messagef("HOOK play_kon_music #%u enter game-base=%08X randu=%08X valid=%d set_music=%08X valid=%d\n",
+			call_number, (unsigned int)injector.base_addr,
+			log_code_pointer(randu_pointer), is_plausible_code_pointer(randu_pointer),
+			log_code_pointer(set_music_pointer), is_plausible_code_pointer(set_music_pointer));
 
 	play_kon_music();
 
