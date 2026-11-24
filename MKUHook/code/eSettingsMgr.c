@@ -8,7 +8,7 @@
 #include <string.h>
 #include "eLog.h"
 
-#include "..\minIni.h"
+#include "../minIni.h"
 
 
 struct settings TheSettings;
