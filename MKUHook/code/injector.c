@@ -3,6 +3,10 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
+// Forward Declarations
+void MakeNOP(uintptr_t at);
+uintptr_t MakeCallStub(uintptr_t numInstr);
+
 int AllocMemBlock(int size, int* id) {
     *id = sceKernelAllocPartitionMemory(PSP_MEMORY_PARTITION_USER, "alloc", PSP_SMEM_Low, size, NULL);
     if (*id < 0) {
@@ -26,7 +30,7 @@ void* GetGP()
         "move %0, $gp\n"
         : "=r"(gp)
     );
-    return gp;
+    return (void*)gp;
 }
 
 void SetModuleBaseAddress(uintptr_t addr, size_t size)
@@ -59,17 +63,17 @@ uintptr_t adjustAddress(uintptr_t addr)
 
 void WriteMemoryRaw(uintptr_t addr, void* value, size_t size)
 {
-    memcpy(adjustAddress(addr), value, size);
+    memcpy((void*)adjustAddress(addr), value, size);
 }
 
 void ReadMemoryRaw(uintptr_t addr, void* ret, size_t size)
 {
-    memcpy(ret, adjustAddress(addr), size);
+    memcpy(ret, (void*)adjustAddress(addr), size);
 }
 
 void MemoryFill(uintptr_t addr, uint8_t value, size_t size)
 {
-    memset(adjustAddress(addr), value, size);
+    memset((void*)adjustAddress(addr), value, size);
 }
 
 void WriteInstr(uintptr_t addr, uint32_t value)
@@ -170,7 +174,7 @@ void MakeNOPWithSize(uintptr_t at, size_t size)
 
 void MakeRangedNOP(uintptr_t at, uintptr_t until)
 {
-    return MakeNOPWithSize(adjustAddress(at), (size_t)(until - at));
+    MakeNOPWithSize(adjustAddress(at), (size_t)(until - at));
 }
 
 uintptr_t MakeInline(size_t instrCount, uintptr_t at, ...)
@@ -179,17 +183,17 @@ uintptr_t MakeInline(size_t instrCount, uintptr_t at, ...)
     size_t i;
 
     va_list ap;
-    va_start(ap, instrCount);
+    va_start(ap, at); // Fixed va_start parameter warning
     for (i = 0; i < instrCount; i++) {
         uint32_t arg = va_arg(ap, uint32_t);
         WriteInstr(functor + i * 4, arg);
     }
     va_end(ap);
 
-    injector.MakeJMP(functor + i * 4, at + 8); // should be +8, cuz next instruction is executed before jump
+    injector.MakeJMP(functor + i * 4, at + 8); 
     i++;
-    injector.WriteMemory32(functor + i * 4, injector.ReadMemory32(at + 4)); //so we write it here
-    injector.MakeNOP(at + 4); //and nop here, so it won't be executed twice
+    injector.WriteMemory32(functor + i * 4, injector.ReadMemory32(at + 4)); 
+    injector.MakeNOP(at + 4); 
     injector.MakeJMP(at, functor);
     return functor;
 }
@@ -202,20 +206,20 @@ uintptr_t MakeCallStub(uintptr_t numInstr) {
 
 void MakeLUIORI(uintptr_t at, RegisterID reg, float imm)
 {
-    uintptr_t functor = MakeCallStub(4); // lui ori j nop
+    uintptr_t functor = MakeCallStub(4); 
     injector.WriteMemory32(functor + 0, lui(reg, HIWORD(imm)));
     injector.WriteMemory32(functor + 4, ori(reg, reg, LOWORD(imm)));
-    injector.MakeJMP(functor + 8, at + 4); // should be +8 as well, but it won't work, e.g. two lui instructions in a row
+    injector.MakeJMP(functor + 8, at + 4); 
     injector.MakeNOP(functor + 12);
     injector.MakeJMP(at, functor);
 }
 
 void MakeLI(uintptr_t at, RegisterID reg, int32_t imm)
 {
-    uintptr_t functor = MakeCallStub(4); // lui ori j nop
+    uintptr_t functor = MakeCallStub(4); 
     injector.WriteMemory32(functor + 0, lui(reg, HIWORD(imm)));
     injector.WriteMemory32(functor + 4, ori(reg, reg, LOWORD(imm)));
-    injector.MakeJMP(functor + 8, at + 4); // should be +8 as well, but it won't work as well
+    injector.MakeJMP(functor + 8, at + 4); 
     injector.MakeNOP(functor + 12);
     injector.MakeJMP(at, functor);
 }
@@ -228,8 +232,6 @@ uint32_t parseCommand(uint32_t command, uint32_t from, uint32_t to)
 
 uint32_t isDelaySlotNearby(uintptr_t at)
 {
-    static const uint32_t instr_len = 4;
-
     uint8_t J = parseCommand(j(0x123456), 26, 31);
     uint8_t JAL = parseCommand(jal(0x123456), 26, 31);
     uint8_t B = parseCommand(b(10), 26, 31);
@@ -239,8 +241,8 @@ uint32_t isDelaySlotNearby(uintptr_t at)
     uint8_t BC1FL = parseCommand(bc1fl(10), 26, 31);
     uint8_t BC1TL = parseCommand(bc1tl(10), 26, 31);
 
-    uint32_t prev_instr = parseCommand(ReadMemory32(at - instr_len), 26, 31);
-    uint32_t next_instr = parseCommand(ReadMemory32(at + instr_len), 26, 31);
+    uint32_t prev_instr = parseCommand(ReadMemory32(at - 4), 26, 31);
+    uint32_t next_instr = parseCommand(ReadMemory32(at + 4), 26, 31);
 
     if (prev_instr == J || prev_instr == JAL || prev_instr == B || prev_instr == BEQ || prev_instr == BNE || prev_instr == BC1F || prev_instr == BC1FL || prev_instr == BC1TL)
         return 1;
@@ -252,8 +254,6 @@ uint32_t isDelaySlotNearby(uintptr_t at)
 
 void MakeInlineLUIORI(uintptr_t at, float imm)
 {
-    static const uint32_t instr_len = 4;
-
     uint8_t LUI = parseCommand(lui(0, 0), 26, 31);
     uint8_t ORI = parseCommand(ori(0, 0, 0), 26, 31);
 
@@ -263,7 +263,7 @@ void MakeInlineLUIORI(uintptr_t at, float imm)
 
     if (instr == LUI)
     {
-        for (uintptr_t i = at + instr_len; i <= (at + instr_len + (5 * instr_len)); i += instr_len)
+        for (uintptr_t i = at + 4; i <= (at + 4 + (5 * 4)); i += 4)
         {
             bytes = ReadMemory32(i);
             instr = parseCommand(bytes, 26, 31);
@@ -278,21 +278,22 @@ void MakeInlineLUIORI(uintptr_t at, float imm)
                     return;
                 }
                 else
-                    return MakeLUIORI(i, reg_ori, imm);
+                {
+                    MakeLUIORI(i, reg_ori, imm);
+                    return;
+                }
             }
         }
 
         if (isDelaySlotNearby(at))
             WriteMemory16(at, HIWORD(imm));
         else
-            return MakeLUIORI(at, reg_lui, imm);
+            MakeLUIORI(at, reg_lui, imm);
     }
 }
 
 void MakeInlineLI(uintptr_t at, int32_t imm)
 {
-    static const uint32_t instr_len = 4;
-
     uint8_t ORI = parseCommand(ori(0, 0, 0), 26, 31);
     uint8_t ZERO = parseCommand(ori(0, 0, 0), 21, 25);
 
@@ -304,9 +305,9 @@ void MakeInlineLI(uintptr_t at, int32_t imm)
     if (instr == ORI && reg_zero == ZERO)
     {
         if (isDelaySlotNearby(at))
-            return WriteMemory16(at, LOWORD(imm));
+            WriteMemory16(at, LOWORD(imm));
         else
-            return MakeLI(at, reg_ori, imm);
+            MakeLI(at, reg_ori, imm);
     }
 }
 
