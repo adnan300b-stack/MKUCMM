@@ -9,30 +9,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: pspdev/pspdev:latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Set up old PSP Toolchain version
-        run: |
-          echo "Installing prerequisites..."
-          sudo apt-get update
-          sudo apt-get install -y build-essential autoconf automake cmake git libreadline-dev libncurses5-dev zlib1g-dev bison flex libusb-dev libsdl1.2-dev
-          
-          echo "Cloning specific older version of psptoolchain..."
-          git clone https://github.com/pspdev/psptoolchain.git
-          cd psptoolchain
-          
-          # اختيار إصدار أو تاريخ قديم عبر الـ Commit Hash (استبدل هذا الرمز برمز الـ commit للنسخة القديمة التي تريدها)
-          # git checkout [INSERT_OLD_COMMIT_HASH_HERE]
-          
-          echo "Building toolchain (this may take a few minutes)..."
-          sudo ./toolchain-extra.sh || true
-          sudo ./toolchain.sh
-          
-          # إضافة مسار الأدوات إلى البيئة
-          echo "/usr/local/pspdev/bin" >> $GITHUB_PATH
 
       - name: Build Project
         run: |
