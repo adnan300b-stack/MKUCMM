@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "mkuplrinfo.h"
 #include "eLog.h"
 #include "mkdeception.h"
@@ -147,66 +148,62 @@ struct mk_toc_entry mokap_file_table[] = {
 
 
 struct char_info_entry	pCharTable[] = {
-	{"SCORPION"	, 0x8B05CA4	, 0x8B05DD0	,"scorpion.mko"},
-	{"BARAKA"	, 0x8B00560	, 0x8B00698	,"baraka.mko"},
-	{"NOOB"	, 0x8B055B4	, 0x8B05680	,"noob.mko"},
-	{"SUB-ZERO"	, 0x8B06EB0	, 0x8B06FE8	,"subzero.mko"},
-	{"MILEENA"	, 0x8B03F74	, 0x8B040AC	,"mileena.mko"},
-	{"NIGHTWOLF"	, 0x8B05308	, 0x8B05440	,"nightwolf.mko"},
-	{"ERMAC"	, 0x8B014D8	, 0x8B0161C	,"ermac.mko"},
-	{"ASHRAH"	, 0x8B0023C	, 0x8B00374	,"ashrah.mko"},
-	{"SINDEL"	, 0x8B06694	, 0x8B067CC	,"sindel.mko"},
-	{"LI MEI"	, 0x8B03944	, 0x8B0380C	,"limei.mko"},
-	{"BO' RAI CHO"	, 0x8B00A40	, 0x8B00B78	,"boraicho.mko"},
-	{"HOTARU"	, 0x8B01FB8	, 0x8B020F0	,"hotaru.mko"},
-	{"KENSHI"	, 0x8B02BE8	, 0x8B02D20	,"kenshi.mko"},
-	{"SMOKE"	, 0x8B06C10	, 0x8B06D0C	,"smoke.mko"},
-	{"HAVIK"	, 0x8B06964	, 0x8B06A9C	,"skab.mko"},
-	{"TANYA"	, 0x8B071BC	, 0x8B072F4	,"tanya.mko"},
-	{"LIU KANG"	, 0x8B03C5C	, 0x8B03B24	,"liukang.mko"},
-	{"GHOST"	, 0x8B03D94	, 0x8B03D94	,"liukang_ghost.mko"},
-	{"KIRA"	, 0x8B02EDC	, 0x8B03014	,"kira.mko"},
-	{"KABAL"	, 0x8B028E8	, 0x8B02A20	,"kabal.mko"},
-	{"KOBRA"	, 0x8B034E8	, 0x8B03620	,"kobra.mko"},
-	{"JADE"	, 0x8B022DC	, 0x8B02414	,"jade.mko"},
-	{"DAIROU"	, 0x8B0107C	, 0x8B011B4	,"dairou.mko"},
-	{"RAIDEN"	, 0x8B05A04	, 0x8B05B3C	,"raiden.mko"},
-	{"DARRIUS"	, 0x8B00D58	, 0x8B00E90	,"cassius.mko"},
-	{"SHUJINKO"	, 0x8B06268	, 0x8B063A0	,"shujinko.mko"},
-	{"SHUJINKO"	, 0x8B064E4	, 0x8B064E4	,"shujinko_13.mko"},
-	{"NOOB - SMOKE"	, 0x8B058D8	, 0x8B057B8	,"noobsmoke.mko"},
-	{"MONSTER"	, 0x8B017CC	, 0x8B017CC	,"freak.mko"},
-	{"ONAGA"	, 0x8B01340	, 0x8B01340	,"dragonking.mko"},
-	{"GORO"	, 0x8B01CAC	, 0x8B01DD8	,"goro.mko"},
-	{"SHAO KAHN"	, 0x8B05FB0	, 0x8B060DC	,"shaokahn.mko"},
-	{"FROST"	, 0x8B01994	, 0x8B01ACC	,"frost.mko"},
-	{"KITANA"	, 0x8B031DC	, 0x8B03308	,"kitana.mko"},
-	{"JAX"	, 0x8B025E8	, 0x8B02714	,"jax.mko"},
-	{"BLAZE"	, 0x8B0086C	, 0x8B0086C	,"blaze.mko"},
-	{"RANDOM"	, 0x8B05FB0	, 0x8B060DC	,"shaokahn.mko"},
-	{"JAX"	, 0x8B04688	, 0x8B04790	,"mkda_jax.mko"},
-	{"RAIDEN"	, 0x8B04EC4	, 0x8B04EC4	,"mkda_rayden.mko"},
-	{"QUAN CHI"	, 0x8B04D08	, 0x8B04D08	,"mkda_quanchi.mko"},
-	{"KUNG LAO"	, 0x8B04A64	, 0x8B04A64	,"mkda_kunglao.mko"},
-	{"JOHNNY CAGE"	, 0x8B0431C	, 0x8B0431C	,"mkda_cage.mko"},
-	{"SONYA"	, 0x8B05164	, 0x8B05164	,"mkda_sonya.mko"},
-	{"NITARA"	, 0x8B04BB8	, 0x8B04BB8	,"mkda_nitara.mko"},
-	{"SHANG TSUNG"	, 0x8B05038	, 0x8B05038	,"mkda_shang.mko"},
-	{"FROST"	, 0x8B04568	, 0x8B04568	,"mkda_frost.mko"},
-	{"KITANA"	, 0x8B048CC	, 0x8B048CC	,"mkda_kitana.mko"},
-	{"DRAHMIN"	, 0x8B0446C	, 0x8B0446C	,"mkda_drahmin.mko"},
-	{"BLAZE"	, 0x8B041F0	, 0x8B041F0	,"mkda_blaze.mko"},
+	{"SCORPION"	, (struct mk_toc_entry*)0x8B05CA4	, (struct mk_toc_entry*)0x8B05DD0	,"scorpion.mko"},
+	{"BARAKA"	, (struct mk_toc_entry*)0x8B00560	, (struct mk_toc_entry*)0x8B00698	,"baraka.mko"},
+	{"NOOB"	, (struct mk_toc_entry*)0x8B055B4	, (struct mk_toc_entry*)0x8B05680	,"noob.mko"},
+	{"SUB-ZERO"	, (struct mk_toc_entry*)0x8B06EB0	, (struct mk_toc_entry*)0x8B06FE8	,"subzero.mko"},
+	{"MILEENA"	, (struct mk_toc_entry*)0x8B03F74	, (struct mk_toc_entry*)0x8B040AC	,"mileena.mko"},
+	{"NIGHTWOLF"	, (struct mk_toc_entry*)0x8B05308	, (struct mk_toc_entry*)0x8B05440	,"nightwolf.mko"},
+	{"ERMAC"	, (struct mk_toc_entry*)0x8B014D8	, (struct mk_toc_entry*)0x8B0161C	,"ermac.mko"},
+	{"ASHRAH"	, (struct mk_toc_entry*)0x8B0023C	, (struct mk_toc_entry*)0x8B00374	,"ashrah.mko"},
+	{"SINDEL"	, (struct mk_toc_entry*)0x8B06694	, (struct mk_toc_entry*)0x8B067CC	,"sindel.mko"},
+	{"LI MEI"	, (struct mk_toc_entry*)0x8B03944	, (struct mk_toc_entry*)0x8B0380C	,"limei.mko"},
+	{"BO' RAI CHO"	, (struct mk_toc_entry*)0x8B00A40	, (struct mk_toc_entry*)0x8B00B78	,"boraicho.mko"},
+	{"HOTARU"	, (struct mk_toc_entry*)0x8B01FB8	, (struct mk_toc_entry*)0x8B020F0	,"hotaru.mko"},
+	{"KENSHI"	, (struct mk_toc_entry*)0x8B02BE8	, (struct mk_toc_entry*)0x8B02D20	,"kenshi.mko"},
+	{"SMOKE"	, (struct mk_toc_entry*)0x8B06C10	, (struct mk_toc_entry*)0x8B06D0C	,"smoke.mko"},
+	{"HAVIK"	, (struct mk_toc_entry*)0x8B06964	, (struct mk_toc_entry*)0x8B06A9C	,"skab.mko"},
+	{"TANYA"	, (struct mk_toc_entry*)0x8B071BC	, (struct mk_toc_entry*)0x8B072F4	,"tanya.mko"},
+	{"LIU KANG"	, (struct mk_toc_entry*)0x8B03C5C	, (struct mk_toc_entry*)0x8B03B24	,"liukang.mko"},
+	{"GHOST"	, (struct mk_toc_entry*)0x8B03D94	, (struct mk_toc_entry*)0x8B03D94	,"liukang_ghost.mko"},
+	{"KIRA"	, (struct mk_toc_entry*)0x8B02EDC	, (struct mk_toc_entry*)0x8B03014	,"kira.mko"},
+	{"KABAL"	, (struct mk_toc_entry*)0x8B028E8	, (struct mk_toc_entry*)0x8B02A20	,"kabal.mko"},
+	{"KOBRA"	, (struct mk_toc_entry*)0x8B034E8	, (struct mk_toc_entry*)0x8B03620	,"kobra.mko"},
+	{"JADE"	, (struct mk_toc_entry*)0x8B022DC	, (struct mk_toc_entry*)0x8B02414	,"jade.mko"},
+	{"DAIROU"	, (struct mk_toc_entry*)0x8B0107C	, (struct mk_toc_entry*)0x8B011B4	,"dairou.mko"},
+	{"RAIDEN"	, (struct mk_toc_entry*)0x8B05A04	, (struct mk_toc_entry*)0x8B05B3C	,"raiden.mko"},
+	{"DARRIUS"	, (struct mk_toc_entry*)0x8B00D58	, (struct mk_toc_entry*)0x8B00E90	,"cassius.mko"},
+	{"SHUJINKO"	, (struct mk_toc_entry*)0x8B06268	, (struct mk_toc_entry*)0x8B063A0	,"shujinko.mko"},
+	{"SHUJINKO"	, (struct mk_toc_entry*)0x8B064E4	, (struct mk_toc_entry*)0x8B064E4	,"shujinko_13.mko"},
+	{"NOOB - SMOKE"	, (struct mk_toc_entry*)0x8B058D8	, (struct mk_toc_entry*)0x8B057B8	,"noobsmoke.mko"},
+	{"MONSTER"	, (struct mk_toc_entry*)0x8B017CC	, (struct mk_toc_entry*)0x8B017CC	,"freak.mko"},
+	{"ONAGA"	, (struct mk_toc_entry*)0x8B01340	, (struct mk_toc_entry*)0x8B01340	,"dragonking.mko"},
+	{"GORO"	, (struct mk_toc_entry*)0x8B01CAC	, (struct mk_toc_entry*)0x8B01DD8	,"goro.mko"},
+	{"SHAO KAHN"	, (struct mk_toc_entry*)0x8B05FB0	, (struct mk_toc_entry*)0x8B060DC	,"shaokahn.mko"},
+	{"FROST"	, (struct mk_toc_entry*)0x8B01994	, (struct mk_toc_entry*)0x8B01ACC	,"frost.mko"},
+	{"KITANA"	, (struct mk_toc_entry*)0x8B031DC	, (struct mk_toc_entry*)0x8B03308	,"kitana.mko"},
+	{"JAX"	, (struct mk_toc_entry*)0x8B025E8	, (struct mk_toc_entry*)0x8B02714	,"jax.mko"},
+	{"BLAZE"	, (struct mk_toc_entry*)0x8B0086C	, (struct mk_toc_entry*)0x8B0086C	,"blaze.mko"},
+	{"RANDOM"	, (struct mk_toc_entry*)0x8B05FB0	, (struct mk_toc_entry*)0x8B060DC	,"shaokahn.mko"},
+	{"JAX"	, (struct mk_toc_entry*)0x8B04688	, (struct mk_toc_entry*)0x8B04790	,"mkda_jax.mko"},
+	{"RAIDEN"	, (struct mk_toc_entry*)0x8B04EC4	, (struct mk_toc_entry*)0x8B04EC4	,"mkda_rayden.mko"},
+	{"QUAN CHI"	, (struct mk_toc_entry*)0x8B04D08	, (struct mk_toc_entry*)0x8B04D08	,"mkda_quanchi.mko"},
+	{"KUNG LAO"	, (struct mk_toc_entry*)0x8B04A64	, (struct mk_toc_entry*)0x8B04A64	,"mkda_kunglao.mko"},
+	{"JOHNNY CAGE"	, (struct mk_toc_entry*)0x8B0431C	, (struct mk_toc_entry*)0x8B0431C	,"mkda_cage.mko"},
+	{"SONYA"	, (struct mk_toc_entry*)0x8B05164	, (struct mk_toc_entry*)0x8B05164	,"mkda_sonya.mko"},
+	{"NITARA"	, (struct mk_toc_entry*)0x8B04BB8	, (struct mk_toc_entry*)0x8B04BB8	,"mkda_nitara.mko"},
+	{"SHANG TSUNG"	, (struct mk_toc_entry*)0x8B05038	, (struct mk_toc_entry*)0x8B05038	,"mkda_shang.mko"},
+	{"FROST"	, (struct mk_toc_entry*)0x8B04568	, (struct mk_toc_entry*)0x8B04568	,"mkda_frost.mko"},
+	{"KITANA"	, (struct mk_toc_entry*)0x8B048CC	, (struct mk_toc_entry*)0x8B048CC	,"mkda_kitana.mko"},
+	{"DRAHMIN"	, (struct mk_toc_entry*)0x8B0446C	, (struct mk_toc_entry*)0x8B0446C	,"mkda_drahmin.mko"},
+	{"BLAZE"	, (struct mk_toc_entry*)0x8B041F0	, (struct mk_toc_entry*)0x8B041F0	,"mkda_blaze.mko"},
 	// new characters 
-	{"MOKAP"	,	(int)&mokap_file_table	, (int)&mokap_file_table		,"mkda_mokap.mko"},
-	{"KANO"	,		(int)&kano_file_table	, (int)&kano_file_table		,	 "mkda_kano.mko"},
-
-
-
+	{"MOKAP"	,	mokap_file_table	, mokap_file_table		,"mkda_mokap.mko"},
+	{"KANO"	,		kano_file_table	, kano_file_table		,	 "mkda_kano.mko"},
 };
 
 void dump_char_table(unsigned int addr)
 {
-
 	int select_addr = addr + 0x311AA8;
 	char msgBuffer[1256];
 	for (int i = 0; i < 49; i++)
@@ -214,8 +211,8 @@ void dump_char_table(unsigned int addr)
 		struct  char_info_entry chr = *(struct char_info_entry*)(select_addr + (sizeof(struct char_info_entry) * i));
 		sprintf(msgBuffer, "{\"%s\"\t, 0x%X\t, 0x%X\t,\"%s\"},\n",
 			chr.name,
-			chr.file_table,
-			chr.alt_file_table,
+			(unsigned int)chr.file_table,
+			(unsigned int)chr.alt_file_table,
 			chr.scriptName);
 		LOG_Message(msgBuffer);
 	}
@@ -241,7 +238,6 @@ char * get_char_name(int id)
 	else
 		charID = p1_selbox_pos;
 
-
 	if (charID >= 0 && charID < TOTAL_CHARACTERS)
 		result = pCharTable[translate_id_from_pz(charID)].name;
 	else
@@ -260,7 +256,6 @@ char * movelist_get_char_name()
 		return pCharTable[p2_id].name;
 	else
 		return pCharTable[p1_id].name;
-
 }
 
 int custom_create_player(int plr, struct player_info * obj)
@@ -278,8 +273,6 @@ void custom_load_ssf(struct mem_ssf_header * ptr)
 		load_ssf((struct mem_ssf_header*)pCharTable[p2_id].file_table);
 	else
 		load_ssf((struct mem_ssf_header*)pCharTable[p1_id].file_table);
-
-
 }
 
 void custom_load_ssf_async(struct mem_ssf_header * ptr)
@@ -304,8 +297,6 @@ void custom_load_ssf_alt(struct mem_ssf_header* ptr)
 		load_ssf((struct mem_ssf_header*)pCharTable[p2_id].alt_file_table);
 	else
 		load_ssf((struct mem_ssf_header*)pCharTable[p1_id].alt_file_table);
-
-
 }
 
 int custom_load_script_data(int id, char * name)
@@ -325,7 +316,6 @@ int custom_load_script_data_async(int id, char * name)
 	int scriptID = *(int*)(async_proc_data + 8);
 	int charID = *(int*)(async_proc_data + 12);
 	int flags = *(int*)(async_proc_data + 16);
-
 
 	return load_script_data(id,pCharTable[charID].scriptName);
 }
@@ -353,8 +343,6 @@ void set_win_name(char * buf, char * format, char * name)
 		sprintf(buf, format, pCharTable[p2_id].name);
 	else
 		sprintf(buf, format, pCharTable[p1_id].name);
-
-
 }
 
 void hook_unk_func(int unk, int id)
@@ -375,12 +363,10 @@ int unk_load_script_data(int id, char * name)
 
 void calculate_custom_toc()
 {
-	// from toceditor
-
 	// KANO
 	for (int i = 0; i < 18; i++)
 	{
-		kano_file_entry_table[i].belong = &kano_file_table;
+		kano_file_entry_table[i].belong = kano_file_table;
 	}
 
 	int baseSize = 2048;
@@ -388,13 +374,12 @@ void calculate_custom_toc()
 	{
 		kano_file_table[i].previousSize = baseSize;
 		baseSize += (kano_file_table[i].size + 2048 - 1) & -2048;
-
 	}
 
 	// MOKAP
 	for (int i = 0; i < 18; i++)
 	{
-		mokap_file_entry_table[i].belong = &mokap_file_table;
+		mokap_file_entry_table[i].belong = mokap_file_table;
 	}
 
 	baseSize = 2048;
@@ -402,10 +387,5 @@ void calculate_custom_toc()
 	{
 		mokap_file_table[i].previousSize = baseSize;
 		baseSize += (mokap_file_table[i].size + 2048 - 1) & -2048;
-
 	}
-
-	
-
 }
-
