@@ -276,7 +276,7 @@ void custom_load_ssf(struct mem_ssf_header * ptr)
 		load_ssf((struct mem_ssf_header*)pCharTable[p1_id].file_table);
 }
 
-دvoid custom_load_ssf_async(struct mem_ssf_header * ptr)
+void custom_load_ssf_async(struct mem_ssf_header * ptr)
 {
 	int async_proc_data = ReadInt(0x58F6B4);
 	int charID = *(int*)(async_proc_data + 12);
