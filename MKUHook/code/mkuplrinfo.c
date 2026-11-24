@@ -197,9 +197,9 @@ struct char_info_entry	pCharTable[] = {
 	{"KITANA"	, (struct mk_toc_entry*)0x8B048CC	, (struct mk_toc_entry*)0x8B048CC	,"mkda_kitana.mko"},
 	{"DRAHMIN"	, (struct mk_toc_entry*)0x8B0446C	, (struct mk_toc_entry*)0x8B0446C	,"mkda_drahmin.mko"},
 	{"BLAZE"	, (struct mk_toc_entry*)0x8B041F0	, (struct mk_toc_entry*)0x8B041F0	,"mkda_blaze.mko"},
-	// new characters 
-	{"MOKAP"	,	mokap_file_table	, mokap_file_table		,"mkda_mokap.mko"},
-	{"KANO"	,		kano_file_table	, kano_file_table		,	 "mkda_kano.mko"},
+		// new characters 
+	{"MOKAP"	,	(int*)mokap_file_table	, (int*)mokap_file_table		,"mkda_mokap.mko"},
+	{"KANO"	,		(int*)kano_file_table	, (int*)kano_file_table		,	 "mkda_kano.mko"}
 };
 
 void dump_char_table(unsigned int addr)
