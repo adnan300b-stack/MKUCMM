@@ -61,6 +61,7 @@
   #define _tfopen   fopen
   #define _tremove  remove
   #define _trename  rename
+  #define strnicmp strncasecmp
 #endif
 
 #if defined __linux || defined __linux__
