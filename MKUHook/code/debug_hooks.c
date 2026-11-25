@@ -4,14 +4,14 @@
 #include "mkdeception.h"
 #include "stage.h"
 #include "injector.h"
+#include "pspmem.h"
 #include <stdint.h>
 
 #define DEBUG_HOOK_LOG_LIMIT 8
 
 static int is_plausible_code_pointer(uintptr_t pointer)
 {
-	/* PSP user/module addresses are 32-bit and instruction-aligned. This is a
-	 * conservative log-only check; it does not dereference the pointer. */
+	/* Log-only check: validate alignment/range without dereferencing pointer. */
 	return pointer != 0 && pointer <= UINT32_MAX && (pointer & 3U) == 0;
 }
 
@@ -26,7 +26,13 @@ int debug_hook_stage_lock_status(int id)
 	unsigned int call_number = ++calls;
 	int result;
 	uintptr_t delegate = (uintptr_t)is_bgnd_locked;
-	int mode = (int)injector.ReadMemory32(0x58EE98);
+	uint32_t base = (uint32_t)injector.base_addr;
+	int mode = -1;
+
+	/* injector.base_addr is established at game initialization. Read only the
+	 * known game-relative mode word, and do not probe any function pointer. */
+	if (base != 0 && base <= UINT32_MAX - 0x58EE98U)
+		mode = (int)ReadInt(0x58EE98);
 
 	if (call_number <= DEBUG_HOOK_LOG_LIMIT)
 		LOG_Messagef("HOOK stage_lock #%u enter id=%d mode=%d delegate=%08X valid=%d\n",
