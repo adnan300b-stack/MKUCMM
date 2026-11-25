@@ -5,7 +5,9 @@ OBJS = main.o exports.o minIni.o code/pspmem.o code/mkdeception.o code/game_func
 CFLAGS = -g -O0 -G0 -Wall -fshort-wchar -fno-pic -mno-check-zero-division
 CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
 ASFLAGS = $(CFLAGS)
-LDFLAGS += -g
+
+# Added -Wl,-Map=mkuhook.map to generate a symbol map file for function tracking
+LDFLAGS += -g -Wl,-Map=mkuhook.map
 
 BUILD_PRX = 1
 PRX_EXPORTS = exports.exp
