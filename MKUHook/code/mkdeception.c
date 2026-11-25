@@ -5,9 +5,18 @@
 #include "mkuhook.h"
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 
 char msgBuff[256];
 
+/* The supported MKU game image and this plugin execute in PSP user memory.
+ * This catches NULL, misaligned, and obviously corrupt callback addresses; it
+ * cannot prove that a mapped address contains the expected function. */
+static int is_plausible_game_function(uintptr_t pointer)
+{
+	return pointer >= 0x08000000U && pointer < 0x0C000000U &&
+		(pointer & 3U) == 0;
+}
 
 int get_game_tick()
 {
@@ -51,7 +60,19 @@ void MKDeception_Init(unsigned int addr)
 
 int hook_load_hero_model(int ptr)
 {
-	int p_konquest_info = ReadInt(KONQUEST_INFO);
+	uintptr_t logger = (uintptr_t)mk_sprintf;
+	uintptr_t delegate = (uintptr_t)load_hero_model;
+	int p_konquest_info;
+
+	LOG_Messagef("Entering hook_load_hero_model... ptr=%08X logger=%08X delegate=%08X\n",
+		(unsigned int)ptr, (unsigned int)logger, (unsigned int)delegate);
+	if (!is_plausible_game_function(logger) || !is_plausible_game_function(delegate)) {
+		LOG_Messagef("ERROR: hook_load_hero_model skipped invalid callback(s): logger=%08X delegate=%08X\n",
+			(unsigned int)logger, (unsigned int)delegate);
+		return 0;
+	}
+
+	p_konquest_info = ReadInt(KONQUEST_INFO);
 
 	if (!(SettingsMgr_Get().iForceShujinkoModel == -1))
 	{
@@ -59,9 +80,7 @@ int hook_load_hero_model(int ptr)
 			*(char*)(p_konquest_info + 92) = SettingsMgr_Get().iForceShujinkoModel;
 	}
 
-
 	mk_sprintf(msgBuff, "INFO: Loading player konquest model: %d\n", *(char*)(p_konquest_info + 92));
-
 	LOG_Message(msgBuff);
 
 	return load_hero_model(ptr);
@@ -69,7 +88,19 @@ int hook_load_hero_model(int ptr)
 
 int hook_create_player(int plr, struct player_info* obj)
 {
-	mk_sprintf(msgBuff, "INFO: Loading player %d character %d alt: %x\n", plr,obj->characterID, ReadInt(0x4173CC));
+	uintptr_t logger = (uintptr_t)mk_sprintf;
+	uintptr_t delegate = (uintptr_t)create_plr;
+
+	LOG_Messagef("Entering hook_create_player... player=%d obj=%08X logger=%08X delegate=%08X\n",
+		plr, (unsigned int)(uintptr_t)obj, (unsigned int)logger, (unsigned int)delegate);
+	if (obj == NULL || !is_plausible_game_function(logger) ||
+	    !is_plausible_game_function(delegate)) {
+		LOG_Messagef("ERROR: hook_create_player skipped invalid input/callback: obj=%08X logger=%08X delegate=%08X\n",
+			(unsigned int)(uintptr_t)obj, (unsigned int)logger, (unsigned int)delegate);
+		return 0;
+	}
+
+	mk_sprintf(msgBuff, "INFO: Loading player %d character %d alt: %x\n", plr, obj->characterID, ReadInt(0x4173CC));
 	LOG_Message(msgBuff);
 	if (plr == PLAYER1 && toggle_palette)
 	{
