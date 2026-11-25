@@ -11,24 +11,27 @@ static uint32_t game_address(unsigned int offset)
 	return pBaseAddress + (uint32_t)offset;
 }
 
-/* Return non-zero for classic MIPS control-transfer instructions. */
+/* MIPS control-transfer instructions have a delay slot at the following word. */
 static int is_control_transfer(uint32_t instruction)
 {
 	uint32_t opcode = instruction >> 26;
-	uint32_t rs = (instruction >> 21) & 0x1F;
+	uint32_t function = instruction & 0x3FU;
+	uint32_t rs = (instruction >> 21) & 0x1FU;
 
-	if (opcode == 0x02 || opcode == 0x03) /* J, JAL */
+	if (opcode == 0x00 && (function == 0x08 || function == 0x09)) /* JR/JALR */
+		return 1;
+	if (opcode == 0x02 || opcode == 0x03) /* J/JAL */
 		return 1;
 	if (opcode == 0x01 || (opcode >= 0x04 && opcode <= 0x07) ||
-	    (opcode >= 0x14 && opcode <= 0x17)) /* REGIMM, branches/likely */
+	    (opcode >= 0x14 && opcode <= 0x17)) /* REGIMM, branch and likely */
 		return 1;
-	if ((opcode == 0x10 || opcode == 0x11) && rs == 0x08) /* BC0*, BC1* */
-		return 1;
+	if ((opcode == 0x10 || opcode == 0x11 || opcode == 0x12) && rs == 0x08)
+		return 1; /* BC0/BC1/BC2 */
 
 	return 0;
 }
 
-/* A patch at offset N replaces a delay-slot instruction if N-4 is a branch. */
+/* A patch at N replaces a delay-slot instruction if N-4 is a branch/jump. */
 static int patch_site_is_delay_slot(unsigned int offset, uint32_t* previous_instruction)
 {
 	uint32_t instruction;
@@ -44,9 +47,7 @@ static int patch_site_is_delay_slot(unsigned int offset, uint32_t* previous_inst
 
 static int jump_region_is_valid(unsigned int offset, unsigned int target)
 {
-	uint32_t site = game_address(offset);
-	uint32_t pc_plus_4 = site + 4U;
-
+	uint32_t pc_plus_4 = game_address(offset) + 4U;
 	return ((pc_plus_4 ^ target) & 0xF0000000U) == 0;
 }
 
@@ -95,6 +96,7 @@ void MakeCall(unsigned int addr, unsigned int func)
 	}
 
 	_sw(0x0C000000U | ((func >> 2) & 0x03FFFFFFU), site);
+	LOG_Messagef("MakeCall installed: site=%08X target=%08X\n", site, func);
 }
 
 void MakeJump(unsigned int addr, unsigned int func)
@@ -116,6 +118,7 @@ void MakeJump(unsigned int addr, unsigned int func)
 	}
 
 	_sw(0x08000000U | ((func & 0x0FFFFFFCU) >> 2), site);
+	LOG_Messagef("MakeJump installed: site=%08X target=%08X\n", site, func);
 }
 
 void MakeLUI(unsigned int addr, unsigned int value)
