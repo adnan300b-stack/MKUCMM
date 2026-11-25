@@ -7,27 +7,23 @@
 #include "pspmem.h"
 #include <stdint.h>
 
-/* PSP user code is normally in this range. This rejects NULL, misaligned,
- * and obviously corrupt values, but cannot prove a mapped address is code. */
-static int is_plausible_code_pointer(uintptr_t pointer)
+static int is_expected_game_pointer(uintptr_t actual, unsigned int offset)
 {
-	return pointer >= 0x08000000U && pointer < 0x0C000000U &&
-		(pointer & 3U) == 0;
-}
-
-static unsigned int log_code_pointer(uintptr_t pointer)
-{
-	return is_plausible_code_pointer(pointer) ? (unsigned int)pointer : 0U;
+	uintptr_t expected = MKDeception_GameAddress(offset);
+	return expected != 0 && actual == expected && (actual & 3U) == 0;
 }
 
 int debug_hook_character_lock_status(int id, int param)
 {
-	uintptr_t delegate = (uintptr_t)is_char_locked;
+	uintptr_t actual = (uintptr_t)is_char_locked;
+	uintptr_t expected = MKDeception_GameAddress(0x16167C);
+	int valid = is_expected_game_pointer(actual, 0x16167C);
 
-	LOG_Messagef("Entering character_lock id=%d param=%d delegate=%08X valid=%d\n",
-		id, param, log_code_pointer(delegate), is_plausible_code_pointer(delegate));
-	if (!is_plausible_code_pointer(delegate)) {
-		LOG_Messagef("ERROR: character_lock rejected function pointer=%08X\n", (unsigned int)delegate);
+	LOG_Messagef("character_lock: base=%08X id=%d param=%d callback=%08X expected=%08X valid=%d\n",
+		(unsigned int)injector.base_addr, id, param, (unsigned int)actual,
+		(unsigned int)expected, valid);
+	if (!valid) {
+		LOG_Message("ERROR: character_lock callback/base mismatch; delegate not called\n");
 		return 0;
 	}
 	return hook_character_lock_status(id, param);
@@ -35,18 +31,16 @@ int debug_hook_character_lock_status(int id, int param)
 
 int debug_hook_stage_lock_status(int id)
 {
-	uintptr_t delegate = (uintptr_t)is_bgnd_locked;
-	uint32_t base = (uint32_t)injector.base_addr;
-	int mode = -1;
+	uintptr_t actual = (uintptr_t)is_bgnd_locked;
+	uintptr_t expected = MKDeception_GameAddress(0x24CD8);
+	int valid = is_expected_game_pointer(actual, 0x24CD8);
+	int mode = ReadInt(0x58EE98);
 
-	/* Read the game-relative state through the base-aware patcher only. */
-	if (base != 0 && base <= UINT32_MAX - 0x58EE98U)
-		mode = ReadInt(0x58EE98);
-
-	LOG_Messagef("Entering stage_lock id=%d mode=%d delegate=%08X valid=%d\n",
-		id, mode, log_code_pointer(delegate), is_plausible_code_pointer(delegate));
-	if (!is_plausible_code_pointer(delegate)) {
-		LOG_Messagef("ERROR: stage_lock rejected function pointer=%08X\n", (unsigned int)delegate);
+	LOG_Messagef("stage_lock: base=%08X id=%d mode=%d callback=%08X expected=%08X valid=%d\n",
+		(unsigned int)injector.base_addr, id, mode, (unsigned int)actual,
+		(unsigned int)expected, valid);
+	if (!valid) {
+		LOG_Message("ERROR: stage_lock callback/base mismatch; delegate not called\n");
 		return 0;
 	}
 	return hook_stage_lock_status(id);
@@ -54,16 +48,19 @@ int debug_hook_stage_lock_status(int id)
 
 void debug_play_kon_music(void)
 {
-	uintptr_t randu_pointer = (uintptr_t)randu;
-	uintptr_t set_music_pointer = (uintptr_t)set_music;
+	uintptr_t randu_actual = (uintptr_t)randu;
+	uintptr_t set_music_actual = (uintptr_t)set_music;
+	uintptr_t randu_expected = MKDeception_GameAddress(0x1AA9F0);
+	uintptr_t set_music_expected = MKDeception_GameAddress(0x9FD1C);
+	int randu_valid = randu_actual == randu_expected && randu_expected != 0 && (randu_actual & 3U) == 0;
+	int set_music_valid = set_music_actual == set_music_expected && set_music_expected != 0 && (set_music_actual & 3U) == 0;
 
-	LOG_Messagef("Entering play_kon_music randu=%08X valid=%d set_music=%08X valid=%d\n",
-		log_code_pointer(randu_pointer), is_plausible_code_pointer(randu_pointer),
-		log_code_pointer(set_music_pointer), is_plausible_code_pointer(set_music_pointer));
-	if (!is_plausible_code_pointer(randu_pointer) ||
-	    !is_plausible_code_pointer(set_music_pointer)) {
-		LOG_Messagef("ERROR: play_kon_music skipped invalid callbacks randu=%08X set_music=%08X\n",
-			(unsigned int)randu_pointer, (unsigned int)set_music_pointer);
+	LOG_Messagef("play_kon_music: base=%08X randu=%08X expected=%08X valid=%d set_music=%08X expected=%08X valid=%d\n",
+		(unsigned int)injector.base_addr, (unsigned int)randu_actual,
+		(unsigned int)randu_expected, randu_valid, (unsigned int)set_music_actual,
+		(unsigned int)set_music_expected, set_music_valid);
+	if (!randu_valid || !set_music_valid) {
+		LOG_Message("ERROR: play_kon_music callback/base mismatch; callbacks not called\n");
 		return;
 	}
 	play_kon_music();
