@@ -20,8 +20,9 @@ uintptr_t MKDeception_GameAddress(unsigned int offset)
 	return base + (uintptr_t)offset;
 }
 
-/* Reject NULL, misaligned, out-of-user-space, or unexpected game callbacks. */
-static int is_expected_game_function(uintptr_t pointer, unsigned int offset)
+/* Validate an indirect target against the known ULUS10102 game text base and
+ * callback offset. Alignment/range alone cannot prove an address is executable. */
+int MKDeception_IsExpectedGameFunction(uintptr_t pointer, unsigned int offset)
 {
 	uintptr_t expected = MKDeception_GameAddress(offset);
 
@@ -76,19 +77,19 @@ void MKDeception_Init(unsigned int addr)
 	LOG_Messagef("callback check: is_char_locked actual=%08X expected=%08X valid=%d\n",
 		(unsigned int)(uintptr_t)is_char_locked,
 		(unsigned int)MKDeception_GameAddress(0x16167C),
-		is_expected_game_function((uintptr_t)is_char_locked, 0x16167C));
+		MKDeception_IsExpectedGameFunction((uintptr_t)is_char_locked, 0x16167C));
 	LOG_Messagef("callback check: is_bgnd_locked actual=%08X expected=%08X valid=%d\n",
 		(unsigned int)(uintptr_t)is_bgnd_locked,
 		(unsigned int)MKDeception_GameAddress(0x24CD8),
-		is_expected_game_function((uintptr_t)is_bgnd_locked, 0x24CD8));
+		MKDeception_IsExpectedGameFunction((uintptr_t)is_bgnd_locked, 0x24CD8));
 	LOG_Messagef("callback check: randu actual=%08X expected=%08X valid=%d\n",
 		(unsigned int)(uintptr_t)randu,
 		(unsigned int)MKDeception_GameAddress(0x1AA9F0),
-		is_expected_game_function((uintptr_t)randu, 0x1AA9F0));
+		MKDeception_IsExpectedGameFunction((uintptr_t)randu, 0x1AA9F0));
 	LOG_Messagef("callback check: set_music actual=%08X expected=%08X valid=%d\n",
 		(unsigned int)(uintptr_t)set_music,
 		(unsigned int)MKDeception_GameAddress(0x9FD1C),
-		is_expected_game_function((uintptr_t)set_music, 0x9FD1C));
+		MKDeception_IsExpectedGameFunction((uintptr_t)set_music, 0x9FD1C));
 }
 
 int hook_load_hero_model(int ptr)
@@ -99,8 +100,8 @@ int hook_load_hero_model(int ptr)
 
 	LOG_Messagef("Entering hook_load_hero_model ptr=%08X logger=%08X delegate=%08X\n",
 		(unsigned int)ptr, (unsigned int)logger, (unsigned int)delegate);
-	if (!is_expected_game_function(logger, 0x248048) ||
-	    !is_expected_game_function(delegate, 0x1C0380)) {
+	if (!MKDeception_IsExpectedGameFunction(logger, 0x248048) ||
+	    !MKDeception_IsExpectedGameFunction(delegate, 0x1C0380)) {
 		LOG_Messagef("ERROR: invalid hero-model callback(s), logger=%08X/%08X delegate=%08X/%08X\n",
 			(unsigned int)logger, (unsigned int)MKDeception_GameAddress(0x248048),
 			(unsigned int)delegate, (unsigned int)MKDeception_GameAddress(0x1C0380));
@@ -131,8 +132,8 @@ int hook_create_player(int plr, struct player_info *obj)
 
 	LOG_Messagef("Entering hook_create_player player=%d obj=%08X logger=%08X delegate=%08X\n",
 		plr, (unsigned int)(uintptr_t)obj, (unsigned int)logger, (unsigned int)delegate);
-	if (obj == NULL || !is_expected_game_function(logger, 0x248048) ||
-	    !is_expected_game_function(delegate, 0x153960)) {
+	if (obj == NULL || !MKDeception_IsExpectedGameFunction(logger, 0x248048) ||
+	    !MKDeception_IsExpectedGameFunction(delegate, 0x153960)) {
 		LOG_Messagef("ERROR: invalid player callback/input obj=%08X logger=%08X/%08X delegate=%08X/%08X\n",
 			(unsigned int)(uintptr_t)obj, (unsigned int)logger,
 			(unsigned int)MKDeception_GameAddress(0x248048), (unsigned int)delegate,

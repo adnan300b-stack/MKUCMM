@@ -11,6 +11,8 @@
 #include "mkstructs.h"
 
 #define ARRAY_COUNT(array) (sizeof(array) / sizeof((array)[0]))
+#define PSP_USER_TEXT_MIN 0x08000000U
+#define PSP_USER_TEXT_MAX 0x0C000000U
 
 struct mk_file_entry katakombs_entry_table[] = {
 	{"katakombs.ssf", 0, 4},
@@ -87,6 +89,22 @@ static int index_is_valid(int index, size_t count)
 	return index >= 0 && (size_t)index < count;
 }
 
+/* These tables live in plugin user RAM. Check the complete extent before any
+ * table read or before writing their addresses into game instructions. */
+static int is_valid_plugin_table(const void *table, size_t bytes, size_t alignment)
+{
+	uintptr_t start = (uintptr_t)table;
+	uintptr_t end;
+
+	if (table == NULL || bytes == 0 || alignment == 0 ||
+	    (start & (alignment - 1U)) != 0 ||
+	    start < PSP_USER_TEXT_MIN || start >= PSP_USER_TEXT_MAX ||
+	    bytes > UINTPTR_MAX - start)
+		return 0;
+	end = start + bytes;
+	return end <= PSP_USER_TEXT_MAX;
+}
+
 static void stage_patch_short(unsigned int offset, unsigned short value)
 {
 	unsigned int target = (unsigned int)GetBaseAddr() + offset;
@@ -109,16 +127,24 @@ static int stage_patch_preconditions_are_valid(void)
 	const uint32_t largest_patch_offset = 0x161C54 + 4;
 	const uintptr_t jump_site = (uintptr_t)base + 0x160504;
 	const uintptr_t jump_target = (uintptr_t)get_arena_name;
+	const uintptr_t stage_table = (uintptr_t)&pStageTable[0];
+	const uintptr_t select_table = (uintptr_t)&pStageSelectNormal[0];
 
-	LOG_Messagef("stage precheck base=%08X jump-site=%08X hook=%08X\n", base,
-		(unsigned int)jump_site, (unsigned int)jump_target);
+	LOG_Messagef("stage precheck base=%08X jump-site=%08X hook=%08X table=%08X select-table=%08X\n",
+		base, (unsigned int)jump_site, (unsigned int)jump_target,
+		(unsigned int)stage_table, (unsigned int)select_table);
 
-	if (base == 0 || (base & 3U) != 0)
+	if (base == 0 || (base & 3U) != 0 || base < PSP_USER_TEXT_MIN || base >= PSP_USER_TEXT_MAX)
 		return 0;
 	if (base > UINT32_MAX - largest_patch_offset)
 		return 0;
-	if ((jump_target & 3U) != 0)
+	if ((jump_target & 3U) != 0 || jump_target < PSP_USER_TEXT_MIN || jump_target >= PSP_USER_TEXT_MAX)
 		return 0;
+	if (!is_valid_plugin_table(pStageTable, sizeof(pStageTable), 4) ||
+	    !is_valid_plugin_table(pStageSelectNormal, sizeof(pStageSelectNormal), 4)) {
+		LOG_Message("stage patch sequence: rejected invalid stage table address/extent/alignment\n");
+		return 0;
+	}
 	if (((jump_site + 4) & (uintptr_t)0xF0000000U) !=
 	    (jump_target & (uintptr_t)0xF0000000U))
 		return 0;
@@ -140,11 +166,19 @@ void dump_stage_table(unsigned int addr)
 
 void dump_select_stable(unsigned int addr)
 {
-	int stage_addr = addr + 0x3121D0;
+	uintptr_t table_address = (uintptr_t)addr + 0x3121D0U;
 	char msgBuffer[1256];
+
+	if (addr == 0 || addr > UINT32_MAX - 0x3121D0U ||
+	    (table_address & 3U) != 0 || table_address < PSP_USER_TEXT_MIN ||
+	    table_address >= PSP_USER_TEXT_MAX ||
+	    sizeof(struct stage_select_entry) * 22U > PSP_USER_TEXT_MAX - table_address) {
+		LOG_Messagef("dump_select_stable rejected invalid game table addr=%08X\n", addr);
+		return;
+	}
 	for (int i = 0; i < 22; i++)
 	{
-		struct stage_select_entry stage = *(struct stage_select_entry*)(stage_addr + (sizeof(struct stage_select_entry) * i));
+		struct stage_select_entry stage = *(struct stage_select_entry*)(table_address + (sizeof(struct stage_select_entry) * i));
 		sprintf(msgBuffer, "{%d\t, \"%s\"\t, %d\t},\n", stage.id, stage.previewImage, stage.unk);
 		LOG_Message(msgBuffer);
 	}
@@ -155,6 +189,12 @@ void play_kon_music(void)
 	int cur_bgnd = ReadInt(0x58E920);
 	if (cur_bgnd >= BGS_EARTH_1 && cur_bgnd <= BGS_EDENIA)
 	{
+		if (!MKDeception_IsExpectedGameFunction((uintptr_t)randu, 0x1AA9F0) ||
+		    !MKDeception_IsExpectedGameFunction((uintptr_t)set_music, 0x9FD1C)) {
+			LOG_Messagef("ERROR: play_kon_music callback validation failed randu=%08X set_music=%08X\n",
+				(unsigned int)(uintptr_t)randu, (unsigned int)(uintptr_t)set_music);
+			return;
+		}
 		int music = randu(24);
 		set_music(music + 6991);
 	}
@@ -166,6 +206,12 @@ char* get_arena_name(void)
 	int cur_bgnd = ReadInt(0x4173AC);
 	int background = TOTAL_BACKGROUNDS;
 	size_t stage_count = ARRAY_COUNT(pStageTable);
+
+	if (!is_valid_plugin_table(pStageTable, sizeof(pStageTable), 4) ||
+	    !is_valid_plugin_table(pStageSelectNormal, sizeof(pStageSelectNormal), 4)) {
+		LOG_Message("get_arena_name rejected invalid stage table address/extent/alignment\n");
+		return NULL;
+	}
 
 	if (pselect_mode > 0)
 	{
@@ -209,6 +255,12 @@ char* get_arena_name(void)
 	if (!index_is_valid(background, stage_count))
 	{
 		LOG_Messagef("get_arena_name rejected background=%d stage-count=%u\n", background, (unsigned int)stage_count);
+		return NULL;
+	}
+	if (!MKDeception_IsExpectedGameFunction((uintptr_t)get_string_by_id, 0x10F4B4)) {
+		LOG_Messagef("get_arena_name rejected get_string_by_id=%08X expected=%08X\n",
+			(unsigned int)(uintptr_t)get_string_by_id,
+			(unsigned int)MKDeception_GameAddress(0x10F4B4));
 		return NULL;
 	}
 	return get_string_by_id(pStageTable[background].stringID | 0x10000);
