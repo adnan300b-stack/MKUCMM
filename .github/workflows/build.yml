@@ -25,6 +25,7 @@ jobs:
         run: |
           mkdir -p release_folder
           find MKUHook -name "*.prx" -exec cp {} release_folder/ \;
+          find MKUHook -name "*.map" -exec cp {} release_folder/ \;
           find . -name "*.ini" -exec cp {} release_folder/ \;
 
       - name: Create Artifact ZIP
