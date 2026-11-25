@@ -2,6 +2,7 @@
 #include "mkstructs.h"
 #include "ssf.h"
 #include <stdint.h>
+#include "eLog.h"
 
 
 enum PLAYER_NUM
@@ -66,6 +67,83 @@ extern int (*RwRasterCreate)(int x, int y, int bits, int mode);
 /* Resolve and validate function addresses against the ULUS10102 text base. */
 uintptr_t MKDeception_GameAddress(unsigned int offset);
 int MKDeception_IsExpectedGameFunction(uintptr_t pointer, unsigned int offset);
+
+/* Guard callback calls used by character/resource hooks. Exact expected offsets
+ * prevent a merely aligned data pointer from being treated as executable. */
+static inline void MKCall_LoadSsf(struct mem_ssf_header *header)
+{
+	if (!MKDeception_IsExpectedGameFunction((uintptr_t)(load_ssf), 0x10FB08)) {
+		LOG_Messagef("ERROR: load_ssf callback invalid actual=%08X expected=%08X\n",
+			(unsigned int)(uintptr_t)(load_ssf),
+			(unsigned int)MKDeception_GameAddress(0x10FB08));
+		return;
+	}
+	(load_ssf)(header);
+}
+
+static inline int MKCall_LoadScriptData(int id, char *name)
+{
+	if (!MKDeception_IsExpectedGameFunction((uintptr_t)(load_script_data), 0x10E438)) {
+		LOG_Messagef("ERROR: load_script_data callback invalid actual=%08X expected=%08X\n",
+			(unsigned int)(uintptr_t)(load_script_data),
+			(unsigned int)MKDeception_GameAddress(0x10E438));
+		return -1;
+	}
+	return (load_script_data)(id, name);
+}
+
+static inline int MKCall_TranslateIdFromPz(int id)
+{
+	if (!MKDeception_IsExpectedGameFunction((uintptr_t)(translate_id_from_pz), 0x15F87C)) {
+		LOG_Messagef("ERROR: translate_id_from_pz callback invalid actual=%08X expected=%08X\n",
+			(unsigned int)(uintptr_t)(translate_id_from_pz),
+			(unsigned int)MKDeception_GameAddress(0x15F87C));
+		return -1;
+	}
+	return (translate_id_from_pz)(id);
+}
+
+static inline int MKCall_StringLeft(int id, int font, char *text, int y, int x, int unk)
+{
+	if (!MKDeception_IsExpectedGameFunction((uintptr_t)(string_left_xy), 0x79624)) {
+		LOG_Messagef("ERROR: string_left_xy callback invalid actual=%08X expected=%08X\n",
+			(unsigned int)(uintptr_t)(string_left_xy),
+			(unsigned int)MKDeception_GameAddress(0x79624));
+		return 0;
+	}
+	return (string_left_xy)(id, font, text, y, x, unk);
+}
+
+static inline int MKCall_StringRight(int id, int font, char *text, int y, int x, int unk)
+{
+	if (!MKDeception_IsExpectedGameFunction((uintptr_t)(string_right_xy), 0x796A4)) {
+		LOG_Messagef("ERROR: string_right_xy callback invalid actual=%08X expected=%08X\n",
+			(unsigned int)(uintptr_t)(string_right_xy),
+			(unsigned int)MKDeception_GameAddress(0x796A4));
+		return 0;
+	}
+	return (string_right_xy)(id, font, text, y, x, unk);
+}
+
+static inline void MKCall_Func6F388(int unk, int id)
+{
+	if (!MKDeception_IsExpectedGameFunction((uintptr_t)(func_6F388), 0x6F388)) {
+		LOG_Messagef("ERROR: func_6F388 callback invalid actual=%08X expected=%08X\n",
+			(unsigned int)(uintptr_t)(func_6F388),
+			(unsigned int)MKDeception_GameAddress(0x6F388));
+		return;
+	}
+	(func_6F388)(unk, id);
+}
+
+/* Function-like macros preserve pointer declarations/address inspection while
+ * routing normal calls through the guards above. */
+#define load_ssf(...) MKCall_LoadSsf(__VA_ARGS__)
+#define load_script_data(...) MKCall_LoadScriptData(__VA_ARGS__)
+#define translate_id_from_pz(...) MKCall_TranslateIdFromPz(__VA_ARGS__)
+#define string_left_xy(...) MKCall_StringLeft(__VA_ARGS__)
+#define string_right_xy(...) MKCall_StringRight(__VA_ARGS__)
+#define func_6F388(...) MKCall_Func6F388(__VA_ARGS__)
 
 enum pad_button {
 	PAD_L2,
